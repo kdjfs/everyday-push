@@ -1,0 +1,39 @@
+name: Daily GitHub Check-in
+
+on:
+  schedule:
+    # 北京时间每天晚上 23:00
+    # GitHub cron 默认 UTC，所以这里是 UTC 15:00
+    - cron: "0 15 * * *"
+
+  # 可以手动运行测试
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  daily-checkin:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Update daily log
+        run: |
+          echo "- $(TZ='Asia/Shanghai' date '+%Y-%m-%d %H:%M:%S') ✅ Daily check-in" >> daily-log.md
+
+      - name: Configure Git
+        run: |
+          git config user.name "${{ vars.GH_USERNAME }}"
+          git config user.email "${{ vars.GH_EMAIL }}"
+
+      - name: Commit
+        run: |
+          git add daily-log.md
+          git commit -m "chore: daily check-in $(TZ='Asia/Shanghai' date '+%Y-%m-%d')" || exit 0
+
+      - name: Push
+        run: |
+          git push
